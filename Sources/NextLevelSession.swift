@@ -258,8 +258,7 @@ extension NextLevelSession {
             videoInput.transform = configuration.transform
             self._videoConfiguration = configuration
             
-            var pixelBufferAttri: [String : Any] = [String(kCVPixelBufferPixelFormatTypeKey): Int(kCVPixelFormatType_420YpCbCr8BiPlanarFullRange)]
-            
+            var pixelBufferAttri: [String : Any] = [String(kCVPixelBufferPixelFormatTypeKey): Int(kCVPixelFormatType_32BGRA)]
             if let formatDescription = formatDescription {
                 let videoDimensions = CMVideoFormatDescriptionGetDimensions(formatDescription)
                 pixelBufferAttri[String(kCVPixelBufferWidthKey)] = Float(videoDimensions.width)
@@ -269,7 +268,7 @@ extension NextLevelSession {
                 pixelBufferAttri[String(kCVPixelBufferWidthKey)] = width
                 pixelBufferAttri[String(kCVPixelBufferHeightKey)] = height
             }
-            
+            pixelBufferAttri[String(kCVPixelBufferIOSurfacePropertiesKey)] = ([:] as AnyObject)
             self._pixelBufferAdapter = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: videoInput, sourcePixelBufferAttributes: pixelBufferAttri)
         }
         return self._videoInput != nil
@@ -409,6 +408,13 @@ extension NextLevelSession {
         
         var frameDuration = minFrameDuration
         let offsetBufferTimestamp = CMTimeSubtract(timestamp, self._timeOffset)
+        if self._lastVideoTimestamp != kCMTimeInvalid {
+            // Drop duplicate frames to prevent save failures
+            if CMTimeSubtract(self._lastVideoTimestamp, self._timeOffset) == offsetBufferTimestamp {
+                completionHandler(false)
+                return
+            }
+        }
         
         if let timeScale = self._videoConfiguration?.timescale,
             timeScale != 1.0 {
@@ -429,7 +435,6 @@ extension NextLevelSession {
             } else {
                 bufferToProcess = pixelBuffer
             }
-            
             if let bufferToProcess = bufferToProcess,
                 pixelBufferAdapter.append(bufferToProcess, withPresentationTime: offsetBufferTimestamp) {
                 self._currentClipDuration = CMTimeSubtract(CMTimeAdd(offsetBufferTimestamp, frameDuration), self._startTimestamp)
@@ -539,7 +544,7 @@ extension NextLevelSession {
                             //print("ending session \(CMTimeGetSeconds(self._currentClipDuration))")
                             writer.endSession(atSourceTime: CMTimeAdd(self._currentClipDuration, self._startTimestamp))
                             writer.finishWriting(completionHandler: {
-                                self.executeClosureSyncOnSessionQueueIfNecessary {
+                                self.executeClosureAsyncOnSessionQueueIfNecessary {
                                     var clip: NextLevelClip? = nil
                                     let url = writer.outputURL
                                     let error = writer.error
