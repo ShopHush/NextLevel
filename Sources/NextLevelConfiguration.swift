@@ -141,7 +141,7 @@ public class NextLevelVideoConfiguration: NextLevelConfiguration {
         
     // MARK: - object lifecycle
     
-    override init() {
+    override public init() {
         if #available(iOS 11.0, *) {
             self.codec = AVVideoCodecType.h264.rawValue
         } else {
@@ -277,7 +277,7 @@ public class NextLevelAudioConfiguration: NextLevelConfiguration {
 
     // MARK: - object lifecycle
     
-    override init() {
+    override public init() {
         super.init()
     }
 

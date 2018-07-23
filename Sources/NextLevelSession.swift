@@ -195,7 +195,7 @@ public class NextLevelSession {
     /// - Parameters:
     ///   - queue: Queue for a session operations
     ///   - queueKey: Key for re-calling the session queue from the system
-    convenience init(queue: DispatchQueue, queueKey: DispatchSpecificKey<()>) {
+    convenience public init(queue: DispatchQueue, queueKey: DispatchSpecificKey<()>) {
         self.init()
         self._sessionQueue = queue
         self._sessionQueueKey = queueKey
