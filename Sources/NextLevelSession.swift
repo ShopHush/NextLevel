@@ -167,7 +167,7 @@ public class NextLevelSession {
     internal var _audioInput: AVAssetWriterInput?
     internal var _pixelBufferAdapter: AVAssetWriterInputPixelBufferAdaptor?
 
-    internal var _videoConfiguration: NextLevelVideoConfiguration?
+    public var _videoConfiguration: NextLevelVideoConfiguration?
     internal var _audioConfiguration: NextLevelAudioConfiguration?
     
     internal var _audioQueue: DispatchQueue
@@ -456,6 +456,7 @@ extension NextLevelSession {
         self.startSessionIfNecessary(timestamp: CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
         
         let duration = CMSampleBufferGetDuration(sampleBuffer)
+        
         if let adjustedBuffer = CMSampleBuffer.createSampleBuffer(fromSampleBuffer: sampleBuffer, withTimeOffset: self._timeOffset, duration: duration) {
             let presentationTimestamp = CMSampleBufferGetPresentationTimeStamp(adjustedBuffer)
             let lastTimestamp = CMTimeAdd(presentationTimestamp, duration)
